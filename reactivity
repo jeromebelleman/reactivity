@@ -54,7 +54,7 @@ sub on_user_command {
         my $up = $empties ? "${empties}k" : '';
 
         # Open file in Vim
-        system("urxvt", "-e", "vim", "+normal G${up}", $filename);
+        system("urxvt", "-e", "vim", "+normal G${up}", $filename);
     } elsif (/:resetfont/) {
         $term->cmd_parse("\e]710;" . $term->x_resource("font") . "\007");
         $term->{fontsize} = 12;
