@@ -41,13 +41,20 @@ sub on_user_command {
         # Write scrollback to file
         use File::Temp qw/ tempfile /;
         my ($fh, $filename) = tempfile(DIR => $tempdir);
+        my $empties = 0;
         for (my $i = $term->top_row; $i < $term->nrow; $i++) {
             print $fh $term->line($i)->t . "\n";
+            
+            # Keep track of trailing empty lines
+            $empties = $term->line($i)->t eq "" ? $empties + 1 : 0;
         }
         close $fh;
 
+        # Any need to move the cursor up at all?
+        my $up = $empties ? "${empties}k" : '';
+
         # Open file in Vim
-        system("urxvt", "-e", "vim", "+normal G", $filename);
+        system("urxvt", "-e", "vim", "+normal G${up}", $filename);
     } elsif (/:resetfont/) {
         $term->cmd_parse("\e]710;" . $term->x_resource("font") . "\007");
         $term->{fontsize} = 12;
