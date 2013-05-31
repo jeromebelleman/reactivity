@@ -1,0 +1,83 @@
+sub on_user_command {
+    my ($term, $cmd) = @_;
+
+    $_ = $cmd;
+    if (/:mon/) {
+        if ($term->{overlay}) {
+            if ($term->{showing}) {
+                $term->disable("add_lines");
+                $term->{overlay}->hide;
+                $term->{showing} = 0;
+            } else {
+                $term->enable(add_lines => \&add_lines);
+                $term->{overlay}->show;
+                $term->{showing} = 1;
+            }
+        } else {
+            $term->enable(add_lines => \&add_lines);
+            $term->{overlay} = $term->overlay_simple(-1, 0, "monitored");
+            $term->{showing} = 1;
+        }
+    } elsif (/:vim/) {
+        my $tempdir = "$ENV{'HOME'}/.urxvt/tmp";
+
+        # Clean up tempfiles
+        opendir DIR, $tempdir;
+        my $latest = 0;
+        while (my $filename = readdir(DIR)) {
+            my $mtime = (stat("$tempdir/$filename"))[9];
+            $latest = $mtime > $latest ? $mtime : $latest;
+        }
+        closedir DIR;
+        opendir DIR, $tempdir;
+        while (my $filename = readdir(DIR)) {
+            my $mtime = (stat("$tempdir/$filename"))[9];
+            if ($mtime && $mtime < $latest - 60 * 60 * 24 * 7) {
+                unlink "$tempdir/$filename";
+            }
+        }
+        closedir DIR;
+
+        # Write scrollback to file
+        use File::Temp qw/ tempfile /;
+        my ($fh, $filename) = tempfile(DIR => $tempdir);
+        for (my $i = $term->top_row; $i < $term->nrow; $i++) {
+            print $fh $term->line($i)->t . "\n";
+        }
+        close $fh;
+
+        # Open file in Vim
+        system("urxvt", "-e", "vim", "+normal G", $filename);
+    } elsif (/:resetfont/) {
+        $term->cmd_parse("\e]710;" . $term->x_resource("font") . "\007");
+        $term->{fontsize} = 12;
+    } elsif (/:smallerfont/) {
+        if ($term->{fontsize}) {
+            $term->{fontsize} -= 2;
+        } else {
+            $term->{fontsize} = 12;
+        }
+
+        my $font = "xft:DejaVu Sans Mono:pixelsize=" . $term->{fontsize};
+
+        $term->cmd_parse("\e]710;" . $font . "\007");
+    } elsif (/:largerfont/) {
+        if ($term->{fontsize}) {
+            $term->{fontsize} += 2;
+        } else {
+            $term->{fontsize} = 12;
+        }
+
+        my $font = "xft:DejaVu Sans Mono:pixelsize=" . $term->{fontsize};
+
+        $term->cmd_parse("\e]710;" . $font . "\007");
+    } elsif (/:paste/) {
+        # Use Shift-Insert instead
+        #$term->tt_write($term->selection);
+    }
+    ()
+}
+
+sub add_lines { shift->scr_bell; () }
+
+# vim: filetype=perl
