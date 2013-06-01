@@ -42,8 +42,12 @@ sub on_user_command {
         use File::Temp qw/ tempfile /;
         my ($fh, $filename) = tempfile(DIR => $tempdir);
         my $empties = 0;
+        my $previous;
         for (my $i = $term->top_row; $i < $term->nrow; $i++) {
-            print $fh $term->line($i)->t . "\n";
+            unless (defined $previous && $term->line($i)->beg == $previous) {
+                print $fh $term->line($i)->t . "\n";
+                $previous = $term->line($i)->beg
+            }
             
             # Keep track of trailing empty lines
             $empties = $term->line($i)->t eq "" ? $empties + 1 : 0;
