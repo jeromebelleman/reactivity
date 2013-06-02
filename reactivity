@@ -45,7 +45,15 @@ sub on_user_command {
         my $previous;
         for (my $i = $term->top_row; $i < $term->nrow; $i++) {
             unless (defined $previous && $term->line($i)->beg == $previous) {
-                print $fh $term->line($i)->t . "\n";
+                my $line = $term->line($i)->t;
+                my $cleanline;
+                for (my $j = 0; $j < length($line); $j++) {
+                    my $c = substr($line, $j, 1);
+                    unless (ord($c) == 65535) {
+                        $cleanline .= $c;
+                    }
+                }
+                print $fh $cleanline . "\n";
                 $previous = $term->line($i)->beg
             }
             
@@ -58,7 +66,8 @@ sub on_user_command {
         my $up = $empties ? "${empties}k" : '';
 
         # Open file in Vim
-        system("urxvt", "-e", "vim", "+setl so=0 | normal G$up", $filename);
+        my $vimcmds = "+setl so=0 ts=8 | normal G$up";
+        system("urxvt", "-e", "vim", $vimcmds, $filename);
     } elsif (/:resetfont/) {
         $term->cmd_parse("\e]710;" . $term->x_resource("font") . "\007");
         $term->{fontsize} = 12;
