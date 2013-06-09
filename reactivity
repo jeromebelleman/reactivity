@@ -40,7 +40,7 @@ sub on_user_command {
 
         # Write scrollback to file
         use File::Temp qw/ tempfile /;
-        my ($fh, $filename) = tempfile(DIR => $tempdir);
+        my ($fh, $filename) = tempfile(DIR => $tempdir, SUFFIX => '-urxvt');
         my $empties = 0;
         my $previous;
         for (my $i = $term->top_row; $i < $term->nrow; $i++) {
