@@ -91,9 +91,6 @@ sub on_user_command {
         my $font = "xft:DejaVu Sans Mono:pixelsize=" . $term->{fontsize};
 
         $term->cmd_parse("\e]710;" . $font . "\007");
-    } elsif (/:paste/) {
-        # Use Shift-Insert instead
-        #$term->tt_write($term->selection);
     }
     ()
 }
